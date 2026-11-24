@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -21,12 +22,64 @@ class MyApp extends StatelessWidget {
 }
 
 // STATIC: Study Planner screen
-class StudyPlannerScreen extends StatelessWidget {
+class StudyPlannerScreen extends StatefulWidget {
   const StudyPlannerScreen({super.key});
+
+  @override
+  State<StudyPlannerScreen> createState() =>
+      _StudyPlannerScreenState();
+}
+
+class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
+
+  // LOGIC: Store study goals in a List of Maps
+  List<Map<String, dynamic>> goals = [
+    {
+      'subject': 'Mathematics',
+      'hours': 3,
+      'done': false,
+    },
+    {
+      'subject': 'Programming',
+      'hours': 2,
+      'done': false,
+    },
+    {
+      'subject': 'Database',
+      'hours': 4,
+      'done': false,
+    },
+  ];
+
+  // LOGIC: Add a sample goal
+  void addGoal() {
+    setState(() {
+      goals.add({
+        'subject': 'English',
+        'hours': 2,
+        'done': false,
+      });
+    });
+  }
+
+  // LOGIC: Toggle goal completion
+  void toggleGoal(int index) {
+    setState(() {
+      goals[index]['done'] = !goals[index]['done'];
+    });
+  }
+
+  // LOGIC: Delete a goal
+  void deleteGoal(int index) {
+    setState(() {
+      goals.removeAt(index);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       // STATIC: App bar
       appBar: AppBar(
         title: const Text('My Study Planner'),
@@ -52,51 +105,85 @@ class StudyPlannerScreen extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            // STATIC: First goal card
-            Card(
-              child: ListTile(
-                leading: const Icon(
-                  Icons.menu_book,
-                  color: Colors.blue,
-                ),
-                title: const Text('Mathematics'),
-                subtitle: const Text('Study time'),
-                trailing: const Text('3 Hours'),
-              ),
-            ),
+            // CONNECTION: Display goals from the list
+            Expanded(
+              child: ListView.builder(
+                itemCount: goals.length,
+                itemBuilder: (context, index) {
 
-            // STATIC: Second goal card
-            Card(
-              child: ListTile(
-                leading: const Icon(
-                  Icons.computer,
-                  color: Colors.green,
-                ),
-                title: const Text('Programming'),
-                subtitle: const Text('Study time'),
-                trailing: const Text('2 Hours'),
-              ),
-            ),
+                  final goal = goals[index];
 
-            // STATIC: Third goal card
-            Card(
-              child: ListTile(
-                leading: const Icon(
-                  Icons.science,
-                  color: Colors.orange,
-                ),
-                title: const Text('Database'),
-                subtitle: const Text('Study time'),
-                trailing: const Text('4 Hours'),
+                  return Card(
+                    child: ListTile(
+
+                      // STATIC: Subject icon
+                      leading: Icon(
+                        goal['subject'] == 'Mathematics'
+                            ? Icons.menu_book
+                            : goal['subject'] == 'Programming'
+                                ? Icons.computer
+                                : Icons.science,
+                        color: Colors.blue,
+                      ),
+
+                      // STATIC: Subject name
+                      title: Text(
+                        goal['subject'],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          decoration: goal['done']
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
+                          color: goal['done']
+                              ? Colors.grey
+                              : Colors.black,
+                        ),
+                      ),
+
+                      subtitle: Text(
+                        'Study time: ${goal['hours']} hours',
+                      ),
+
+                      // STATIC
+                      onTap: () {
+                        toggleGoal(index);
+                      },
+
+                      // CONNECTION: Checkbox and delete button
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+
+                          Checkbox(
+                            value: goal['done'],
+                            onChanged: (value) {
+                              toggleGoal(index);
+                            },
+                          ),
+
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                            ),
+                            onPressed: () {
+                              deleteGoal(index);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
         ),
       ),
 
-      // STATIC: Floating Action Button
+      // CONNECTION: Floating Action Button adds a goal
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: addGoal,
         child: const Icon(Icons.add),
       ),
     );
