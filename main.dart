@@ -51,6 +51,24 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
     },
   ];
 
+  // LOGIC: Calculate total study hours
+  int get totalHours {
+    return goals.fold(
+      0,
+      (sum, goal) => sum + (goal['hours'] as int),
+    );
+  }
+
+  // LOGIC: Count completed goals
+  int get completedGoals {
+    return goals.where((goal) => goal['done'] == true).length;
+  }
+
+  // LOGIC: Count remaining goals
+  int get remainingGoals {
+    return goals.where((goal) => goal['done'] == false).length;
+  }
+
   // LOGIC: Add a sample goal
   void addGoal() {
     setState(() {
@@ -105,77 +123,114 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
 
             const SizedBox(height: 15),
 
-            // CONNECTION: Display goals from the list
+            // STATIC: Statistics summary row
+            Row(
+              children: [
+                Expanded(
+                  child: StatCard(
+                    title: 'Total Hours',
+                    value: '$totalHours',
+                  ),
+                ),
+
+                Expanded(
+                  child: StatCard(
+                    title: 'Completed',
+                    value: '$completedGoals',
+                  ),
+                ),
+
+                Expanded(
+                  child: StatCard(
+                    title: 'Remaining',
+                    value: '$remainingGoals',
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // STATIC: Display goals or empty message
             Expanded(
-              child: ListView.builder(
-                itemCount: goals.length,
-                itemBuilder: (context, index) {
-
-                  final goal = goals[index];
-
-                  return Card(
-                    child: ListTile(
-
-                      // STATIC: Subject icon
-                      leading: Icon(
-                        goal['subject'] == 'Mathematics'
-                            ? Icons.menu_book
-                            : goal['subject'] == 'Programming'
-                                ? Icons.computer
-                                : Icons.science,
-                        color: Colors.blue,
+              child: goals.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No study goals yet. Add your first goal!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16),
                       ),
+                    )
+                  : ListView.builder(
+                      itemCount: goals.length,
+                      itemBuilder: (context, index) {
 
-                      // STATIC: Subject name
-                      title: Text(
-                        goal['subject'],
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          decoration: goal['done']
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
-                          color: goal['done']
-                              ? Colors.grey
-                              : Colors.black,
-                        ),
-                      ),
+                        final goal = goals[index];
 
-                      subtitle: Text(
-                        'Study time: ${goal['hours']} hours',
-                      ),
+                        return Card(
+                          child: ListTile(
 
-                      // STATIC
-                      onTap: () {
-                        toggleGoal(index);
-                      },
+                            // STATIC: Subject icon
+                            leading: Icon(
+                              goal['subject'] == 'Mathematics'
+                                  ? Icons.menu_book
+                                  : goal['subject'] == 'Programming'
+                                      ? Icons.computer
+                                      : Icons.science,
+                              color: Colors.blue,
+                            ),
 
-                      // CONNECTION: Checkbox and delete button
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                            // STATIC: Subject name
+                            title: Text(
+                              goal['subject'],
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                decoration: goal['done']
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                                color: goal['done']
+                                    ? Colors.grey
+                                    : Colors.black,
+                              ),
+                            ),
 
-                          Checkbox(
-                            value: goal['done'],
-                            onChanged: (value) {
+                            // STATIC: Study hours
+                            subtitle: Text(
+                              'Study time: ${goal['hours']} hours',
+                            ),
+
+                            // CONNECTION: Tap to toggle completion
+                            onTap: () {
                               toggleGoal(index);
                             },
-                          ),
 
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: Colors.red,
+                            // CONNECTION: Checkbox and delete button
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+
+                                Checkbox(
+                                  value: goal['done'],
+                                  onChanged: (value) {
+                                    toggleGoal(index);
+                                  },
+                                ),
+
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () {
+                                    deleteGoal(index);
+                                  },
+                                ),
+                              ],
                             ),
-                            onPressed: () {
-                              deleteGoal(index);
-                            },
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -185,6 +240,45 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: addGoal,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+// STATIC: Reusable statistics card
+class StatCard extends StatelessWidget {
+
+  final String title;
+  final String value;
+
+  const StatCard({
+    super.key,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            Text(
+              title,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
