@@ -14,8 +14,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Study Planner',
-
-      // STATIC: Home screen
       home: const StudyPlannerScreen(),
     );
   }
@@ -32,7 +30,7 @@ class StudyPlannerScreen extends StatefulWidget {
 
 class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
 
-  // LOGIC: Store study goals in a List of Maps
+  // LOGIC: Store study goals
   List<Map<String, dynamic>> goals = [
     {
       'subject': 'Mathematics',
@@ -69,14 +67,21 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
     return goals.where((goal) => goal['done'] == false).length;
   }
 
-  // LOGIC: Add a sample goal
-  void addGoal() {
+  // LOGIC: Open Add Goal screen and receive new goal
+  Future<void> addGoal() async {
+    final newGoal = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddGoalScreen(),
+      ),
+    );
+
+    if (newGoal == null) {
+      return;
+    }
+
     setState(() {
-      goals.add({
-        'subject': 'English',
-        'hours': 2,
-        'done': false,
-      });
+      goals.add(newGoal);
     });
   }
 
@@ -132,14 +137,12 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
                     value: '$totalHours',
                   ),
                 ),
-
                 Expanded(
                   child: StatCard(
                     title: 'Completed',
                     value: '$completedGoals',
                   ),
                 ),
-
                 Expanded(
                   child: StatCard(
                     title: 'Remaining',
@@ -164,12 +167,10 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
                   : ListView.builder(
                       itemCount: goals.length,
                       itemBuilder: (context, index) {
-
                         final goal = goals[index];
 
                         return Card(
                           child: ListTile(
-
                             // STATIC: Subject icon
                             leading: Icon(
                               goal['subject'] == 'Mathematics'
@@ -208,7 +209,6 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-
                                 Checkbox(
                                   value: goal['done'],
                                   onChanged: (value) {
@@ -236,7 +236,7 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
         ),
       ),
 
-      // CONNECTION: Floating Action Button adds a goal
+      // CONNECTION: Open Add Goal screen
       floatingActionButton: FloatingActionButton(
         onPressed: addGoal,
         child: const Icon(Icons.add),
@@ -247,7 +247,6 @@ class _StudyPlannerScreenState extends State<StudyPlannerScreen> {
 
 // STATIC: Reusable statistics card
 class StatCard extends StatelessWidget {
-
   final String title;
   final String value;
 
@@ -272,12 +271,132 @@ class StatCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             Text(
               title,
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// STATIC: Add Goal screen
+class AddGoalScreen extends StatefulWidget {
+  const AddGoalScreen({super.key});
+
+  @override
+  State<AddGoalScreen> createState() => _AddGoalScreenState();
+}
+
+class _AddGoalScreenState extends State<AddGoalScreen> {
+
+  // LOGIC: Text controllers
+  final TextEditingController subjectController =
+      TextEditingController();
+
+  final TextEditingController hoursController =
+      TextEditingController();
+
+  // LOGIC: Form key
+  final _formKey = GlobalKey<FormState>();
+
+  // LOGIC: Save and return new goal
+  void saveGoal() {
+    if (_formKey.currentState!.validate()) {
+      final newGoal = {
+        'subject': subjectController.text.trim(),
+        'hours': int.parse(hoursController.text.trim()),
+        'done': false,
+      };
+
+      Navigator.pop(context, newGoal);
+    }
+  }
+
+  // LOGIC: Dispose controllers
+  @override
+  void dispose() {
+    subjectController.dispose();
+    hoursController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+
+      // STATIC: Add Goal app bar
+      appBar: AppBar(
+        title: const Text('Add New Goal'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+
+      // STATIC: Add Goal form
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              // STATIC: Subject field
+              TextFormField(
+                controller: subjectController,
+                decoration: const InputDecoration(
+                  labelText: 'Subject Name',
+                  hintText: 'Enter subject name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a subject name';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              // STATIC: Hours field
+              TextFormField(
+                controller: hoursController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Study Hours',
+                  hintText: 'Enter number of hours',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter study hours';
+                  }
+
+                  final hours = int.tryParse(value.trim());
+
+                  if (hours == null || hours <= 0) {
+                    return 'Hours must be a number greater than 0';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 25),
+
+              // CONNECTION: Save new goal
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: saveGoal,
+                  child: const Text('Save Goal'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
